@@ -3,3 +3,11 @@ This repo, show you how to use movilnet, inception, resnet, or whatever tensorfl
 
 # If you like IA aplication
 Please visit my youtube channel, i made some aplication, that maybe would you like. 
+
+# Guide use
+The aplication consist in load a micro server in FLASK.
+Just run de file
+$ python app.py
+
+# Dependencies
+pip install flask
