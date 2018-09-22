@@ -9,6 +9,7 @@ https://github.com/tensorflow/tfjs-converter
 
 # If you like IA aplication
 Please visit my youtube channel, i made some aplication, that maybe would you like. 
+https://www.youtube.com/channel/UCf0AQymPRhDDs9wFFnVeh6A?view_as=subscriber
 
 # Guide use
 The aplication consist in load a micro server in FLASK.
