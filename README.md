@@ -11,3 +11,6 @@ $ python app.py
 
 # Dependencies
 pip install flask
+
+or visit the Flask page.
+http://flask.pocoo.org/docs/1.0/installation/
