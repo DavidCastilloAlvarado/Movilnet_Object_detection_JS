@@ -1,4 +1,4 @@
-# Movilnet_Object_detection_JS
+# Movilnet_Object_detection_JS-->WebCam(realTime)
 This repo, show you how to use movilnet, inception, resnet, or whatever tensorflow distribution, just using your web browser, with complete independenci, even off line. Please if you know hot to improve the code, leave a recomendation. 
 ![alt text](https://github.com/DavidCastilloAlvarado/Movilnet_Object_detection_JS/raw/master/static/person.jpg)
 For other distros of tensorflow, visit the follow page bellow. 
