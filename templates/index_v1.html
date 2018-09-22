@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Movilnet</title>
+  
+  <!-- Load TensorFlow.js. This is required to use object detection model. -->
+  <script src="{{ url_for('static',filename='tfjs_0_13_0.js') }}"> </script>
+  <!-- Load TF - converted model -->
+  <!--  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-converter"> </script> -->
+  <!-- Load the object detection model. -->
+  <script src="{{ url_for('static',filename='label.js') }}"> </script>
+  <script src="{{ url_for('static',filename='opencv_js.js') }}"> </script>
+  <script src="{{ url_for('static',filename='opencv.js') }}"> </script>
+  <script type="text/javascript">
+  	const MODEL_URL = "{{ url_for('static',filename='web_model/tensorflowjs_model.pb') }}";
+    const WEIGHTS_URL = "{{ url_for('static',filename='web_model/weights_manifest.json') }}"
+      // en el ejemplo de stackoverflow esta la extension para desactivar el cors
+    ready = 0
+    async function mn_load(){
+      try{
+        model_ = await tf.loadFrozenModel(MODEL_URL, WEIGHTS_URL);
+        alert("Modelo Cargado")
+        ready = 1
+      }catch(e){
+        console.error(e);
+        alert("Error al cargar el Modelo")
+      }
+  	}
+	mn_load();
+  </script>
+
+</head>
+<body>
+  <p>MovilNetV1 Activar</p>
+  <input id="clickMe" type="button" value="MovilnetV1" onclick="run();" />
+  <p>NumBox</p>
+  <input type="text" id="nbox" value="10"/>
+  <p>Image to use:</p>
+<img id="scream" src="{{ url_for('video_feed') }}" alt="The Scream">
+
+<p>Deteccio'n de Objetos</p>
+<canvas id="myCanvas" width="800" height="600" style="border:5px solid #d3d3d3;">
+Your browser does not support the HTML5 canvas tag.
+</canvas>
+
+<script>
+window.onload = function() {
+	var img__ = document.getElementById("scream");
+    var oc = document.getElementById("myCanvas");
+    var octx = oc.getContext("2d");
+    oc.width = img__.width
+    oc.height= img__.height
+    octx.drawImage(img__, 1, 1,oc.width,oc.height);
+}
+</script>
+
+  <script>
+    async function run(){
+      while(true){
+        var nbox = parseFloat(document.getElementById("nbox").value);
+        var cat = document.getElementById('scream');
+
+        var cat__= tf.fromPixels(cat).expandDims(0);
+        //var cat__= cat_;
+        var im_ = cv.imread(cat);
+        var im_width = im_.size().width;
+        var im_height = im_.size().height;
+
+
+        if (ready) {
+  	      var predic = await model_.executeAsync({image_tensor: cat__});
+          tf.tidy(() => {
+  	      var boxes_ =tf.squeeze(predic[0]).dataSync();
+  	      var scores_ =tf.squeeze(predic[1]).dataSync();
+  	      var class_ =tf.squeeze(predic[2]).dataSync();
+
+  	      //ymin, xmin, ymax, xmax = box (X,Y)
+  	      //console.log("Boxes : ", boxes_);
+  	      //console.log("Score : ", scores_);
+  	      //console.log("Class : ", class_);
+  	      for (var i = 0; i <= nbox-1; i++) {
+  	      	if (scores_[i]>0.4) {
+  		      	var point1 = new cv.Point(boxes_[i*4+1]*im_width,boxes_[i*4]*im_height);
+    			    var point2 = new cv.Point(boxes_[i*4+3]*im_width,boxes_[i*4+2]*im_height);
+    			    var point3 = new cv.Point(boxes_[i*4+1]*im_width,boxes_[i*4]*im_height-10);
+              var point3_ = new cv.Point(boxes_[i*4+1]*im_width,boxes_[i*4]*im_height-24);
+              var point4 = new cv.Point(boxes_[i*4+3]*im_width,boxes_[i*4]*im_height);
+  		      	cv.rectangle(im_, point1, point2, [255, 255, 255, 255],3);
+              cv.rectangle(im_, point3_, point4, [255, 255, 255, 255],-1); // relleno-filled
+  		      	cv.putText(im_,label[class_[i]-1] +" "+Math.round(scores_[i]*10000)/100+"%",point3, 0, im_height*0.001,[0,0,0,255],1,cv.LINE_AA)
+  	      	}
+  	      }
+          })
+  	      cv.imshow('myCanvas', im_);
+  	      im_.delete();
+
+    		}else{
+    		  alert("Model not ready");
+    		  }
+          //await tf.nextFrame();
+      }
+    }
+  </script>
+</body>
+</html>
