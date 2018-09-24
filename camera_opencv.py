@@ -1,6 +1,6 @@
 import cv2
 from base_camera import BaseCamera
-
+import time
 
 class Camera(BaseCamera):
     video_source = 0
@@ -17,7 +17,9 @@ class Camera(BaseCamera):
 
         while True:
             # read current frame
-            _, img = camera.read()
+            start=time.time()
+            while ((time.time()-start)<0.08):
+                _, img = camera.read()
 
             # encode as a jpeg image and return it
             yield cv2.imencode('.jpg', img)[1].tobytes()
