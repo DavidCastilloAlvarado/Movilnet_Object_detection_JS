@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Movilnet</title>
+  
+  <!-- Load TensorFlow.js. This is required to use object detection model. -->
+  <script src="{{ url_for('static',filename='tfjs_min_0_13_0.js') }}"> </script>
+   <!-- <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@0.13.0/dist/tf.min.js"> </script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core@0.13.0/dist/tf-core.min.js"> </script>
+   -->
+  <!-- Load TF - converted model -->
+  <!--  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-converter"> </script> -->
+  <!-- Load the object detection model. -->
+  <script src="{{ url_for('static',filename='label.js') }}"> </script>
+  <script src="{{ url_for('static',filename='opencv_js.js') }}"> </script>
+  <script src="{{ url_for('static',filename='opencv.js') }}"> </script>
+  <!-- <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-node@0.1.17"> </script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-node-gpu@0.1.17"> </script> -->
+  
+  <script type="text/javascript">
+    // Direcciones del modelo
+  	const MODEL_URL = "{{ url_for('static',filename='web_model/tensorflowjs_model.pb') }}";
+    const WEIGHTS_URL = "{{ url_for('static',filename='web_model/weights_manifest.json') }}"
+      // en el ejemplo de stackoverflow esta la extension para desactivar el cors
+  </script>
+
+</head>
+<body>
+  <p>MovilNetV1 Activar</p>
+  <input id="clickMe" type="button" value="MovilnetV1" onclick="run();" />
+  <p>NumBox</p>
+  <input type="text" id="nbox" value="10"/>
+  <p>Image to use:</p>
+<img id="scream" src="{{ url_for('video_feed') }}" alt="The Scream">
+
+<p>Deteccio'n de Objetos</p>
+<canvas id="myCanvas" width="800" height="600" style="border:5px solid #d3d3d3;">
+Your browser does not support the HTML5 canvas tag.
+</canvas>
+
+
+  <script>
+    function requestAnimationFrame(callback) {
+      setTimeout(callback, 120);
+      //n = tf.memory()
+      //console.log(n)
+    }
+
+    function run(){
+      //console.log("hola run")
+      tf.setBackend('webgl',true);
+      try{
+      tf.loadFrozenModel(MODEL_URL, WEIGHTS_URL).then(model => {
+        function predic_od(model){
+          let cat = document.getElementById('scream');
+          let nbox = parseFloat(document.getElementById("nbox").value);
+          cat__ = tf.tidy(()=>{
+            
+            const cat_= tf.fromPixels(cat)
+            const cat__= cat_.expandDims(0);
+            return cat__
+          })
+          
+          let im_ = cv.imread(cat);
+          let im_width = im_.size().width;
+          let im_height = im_.size().height;
+
+          model.executeAsync({image_tensor: cat__}).then(predic=>{ 
+         
+          
+              const boxes =tf.squeeze(predic[0])
+              const scores =tf.squeeze(predic[1])
+              const classs =tf.squeeze(predic[2])
+              const boxes_ =boxes.dataSync();
+              const scores_ =scores.dataSync();
+              const class_ =classs.dataSync();
+
+              //ymin, xmin, ymax, xmax = box (X,Y)
+              //console.log("Boxes : ", boxes_);
+              //console.log("Score : ", scores_);
+              //console.log("Class : ", class_);
+              for (var i = 0; i <= nbox-1; i++) {
+                if (scores_[i]>0.4) {
+                  let point1 = new cv.Point(boxes_[i*4+1]*im_width,boxes_[i*4]*im_height);
+                  let point2 = new cv.Point(boxes_[i*4+3]*im_width,boxes_[i*4+2]*im_height);
+                  let point3 = new cv.Point(boxes_[i*4+1]*im_width,boxes_[i*4]*im_height-10);
+                  let point3_ = new cv.Point(boxes_[i*4+1]*im_width,boxes_[i*4]*im_height-24);
+                  let point4 = new cv.Point(boxes_[i*4+3]*im_width,boxes_[i*4]*im_height);
+                  cv.rectangle(im_, point1, point2, [255, 255, 255, 255],3);
+                  cv.rectangle(im_, point3_, point4, [255, 255, 255, 255],-1); // relleno-filled
+                  cv.putText(im_,label[class_[i]-1] +" "+Math.round(scores_[i]*10000)/100+"%",point3, 0, im_height*0.001,[0,0,0,255],1,cv.LINE_AA)
+                  //ctx.clearRect(0, 0, im_width, im_height);
+                  cv.imshow('myCanvas', im_);
+                }
+              }
+            
+            tf.dispose(boxes);
+            tf.dispose(scores);
+            tf.dispose(classs);
+            tf.dispose(predic);
+            //tf.dispose(cat__);
+            
+            //console.log("predecido")
+            
+            tf.dispose(predic);
+            tf.dispose(cat__);
+            requestAnimationFrame(predic_od(model));
+            
+          }) 
+          //tf.nextFrame().then(()=>{});
+        }
+        predic_od(model); 
+      })
+      }catch(e){
+        console.error(e);
+        alert("Error al cargar el Modelo")
+      }
+      //console.log("hola run2")
+    }
+        // Forma absoluta de llamar a la predicci'on
+        //tf.loadFrozenModel(MODEL_URL, WEIGHTS_URL).then(model => {model.executeAsync({image_tensor: cat__}).then(prediction=>{ console.log(prediction)}) })
+        // Forma a partir de model_
+        // model_.executeAsync({image_tensor: cat__}).then(prediction=>{ console.log(prediction)})
+        //let canvas = document.getElementById('myCanvas');
+        //let ctx = canvas.getContext('2d');
+        
+        //var cat__= cat_;
+        
+        
+          
+  </script>
+
+
+</body>
+</html>
